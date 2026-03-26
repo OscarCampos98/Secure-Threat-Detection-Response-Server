@@ -166,7 +166,7 @@ Threat / Status Output
 - manages lifecycle
 
 ## Architecture Diagram
-![Diagram](Threat_Detection_and_Response_Server.drawio)
+![Diagram](Images/Threat_Detection_and_Response_Server.drawio)
 
 A visual architecture diagram will be added here (planned using draw.io).
 
