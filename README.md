@@ -117,6 +117,7 @@ threat-detection-server/
 └── README.md
 ```
 ## Architecture 
+```bash 
 Multiple Clients
         ↓
 TCP Listener (Server)
@@ -130,6 +131,7 @@ Per-Client State Tracking
 Logger
         ↓
 Threat / Status Output
+```
 
 ## Components
 Server:
@@ -180,20 +182,24 @@ Phase 1: Core Detection Server
 - rule-based detection
 - per-client threat-state classification
 - file-based logging
+
 Phase 2: Enhanced Monitoring
 - improved detection rules
 - message pattern analysis
 - heartbeat monitoring
 - richer per-client state analysis
 - structured log format improvements
+
 Phase 3: Data & Persistence
 - database integration (e.g., PostgreSQL)
 - persistent event storage
 - queryable log system
+
 Phase 4: Secure Communication
 - encrypted message transport
 - message integrity validation
 - client authentication and identity validation
+
 Phase 5: Response & Integration
 - alerting mechanisms
 - integration with telemetry systems
