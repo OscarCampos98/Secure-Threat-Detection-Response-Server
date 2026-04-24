@@ -1,106 +1,140 @@
 # Threat Detection & Response Server
 
-A modular **multi-client backend server** built in **C++ on Linux**, designed to monitor incoming system messages, detect suspicious behavior, maintain **per-client threat state**, and support structured response workflows in security-sensitive environments.
+A modular multi-client backend server built in C++ for Linux environments, designed to receive client activity, detect suspicious behavior, classify threat levels, log security-relevant events, and support automated response workflows.
 
-This project is developed as a **standalone prototype** with a long-term goal of integrating into a broader **secure telemetry and monitoring architecture**.
+This project is the first major component of a larger Threat Detection & Response System that may later include lightweight client agents, a mission-control style dashboard, persistent storage, and deeper integration with secure telemetry infrastructure.
 
 ---
 
 ## Overview
 
-Modern systems—especially those involving **uncrewed platforms** and **distributed devices**—require continuous monitoring to detect anomalies, faults, and potential security risks.
+Modern monitored systems—especially those involving **uncrewed platforms, distributed devices**, or Linux-based infrastructure—require continuous visibility into client activity, message behavior, and connection patterns.
 
-This server acts as a **central analysis component** that:
+This server acts as the **core detection and response layer**. It is responsible for:
 
-- accepts connections from **multiple clients**
-- processes messages concurrently (thread-per-client model)
-- analyzes message patterns and behavior
-- classifies **per-client threat state**
-- logs structured events for monitoring and investigation
-- lays the foundation for future automated response workflows
+- accepting connections from multiple clients
+- processing client messages concurrently using a thread-per-client model
+- parsing and validating incoming messages
+- applying rule-based threat detection
+- maintaining per-client threat state
+- logging events, classifications, and response decisions
+- triggering response actions based on severity
 
 ---
 
 ## Project Vision
 
-The long-term vision of this project is to build a backend system capable of:
+The long-term vision is to build a small but realistic security monitoring system with three major parts:
 
-- monitoring real-time activity across multiple clients
-- detecting operational and security-related anomalies
-- maintaining per-client and system-level threat awareness
-- supporting alerting and response mechanisms
-- integrating with external systems such as telemetry pipelines, logging infrastructure, and control systems
+1. **Client Agents** — lightweight programs that report activity from monitored machines
+2. **Threat Detection Server** — the C++ backend that receives events, analyzes behavior, classifies threats, and triggers responses
+3. **Mission Control Dashboard** — a live interface for viewing connected clients, alerts, logs, and threat state
+
+The current repository begins with the Threat Detection Server, keeping the first implementation focused on backend networking, detection logic, client state tracking, and structured logging.
 
 ---
 
 ## Security Philosophy
 
-This project approaches security from a **monitoring and detection perspective**.
+This project approaches security from a **monitoring, detection, and response** perspective.
+Rather than treating security as only encryption or authentication, the system focuses on:
 
-Rather than focusing solely on secure communication (e.g., encryption or authentication), the system emphasizes:
-
-- visibility into system behavior
+- visibility into client and system behavior
 - detection of abnormal or suspicious patterns
-- classification of system risk levels
-- support for informed response decisions
+- classification of operational risk
+- traceable logging of decisions and evidence
+- controlled response actions based on severity
 
-Security in this context is achieved through **awareness, analysis, and controlled response**, forming a foundation that can later be extended with secure communication and stronger protections.
+Secure communication, authentication, and stronger client identity validation are planned future improvements. The first goal is to build a clean detection and response foundation.
 
 ---
 
 ## Core Concepts
 
 ### Threat Detection
-The system evaluates incoming messages using rule-based logic (initially) to identify abnormal or suspicious behavior.
+The server evaluates incoming messages using rule-based logic to identify suspicious or abnormal behavior.
+
+Example rule categories include:
+
+- repeated failed authentication attempts
+- malformed messages
+- unauthorized commands
+- suspicious request frequency
+- replayed request IDs
+- invalid or expired session tokens
+- repeated connection attempts from the same client
+- unexpected message structure or invalid fields
+
+---
 
 ### Per-Client State Classification
+
 Each connected client maintains its own threat state:
 
-- `NORMAL`
-- `SUSPICIOUS`
-- `CRITICAL`
+- NORMAL
+- SUSPICIOUS
+- CRITICAL
 
-State transitions are driven by message patterns and detected anomalies.
-
-### Response
-
-Response refers to backend-driven actions such as:
-
-- alert generation
-- state escalation
-- structured event logging
-- signaling to connected systems (future)
-
-The system is designed to evolve toward more active response capabilities over time.
+State transitions are driven by message content, client behavior, connection patterns, and historical activity.
 
 ---
 
-## Example Message Types
+##Response Actions
 
-```text
-HEARTBEAT
-STATUS OK
-ERROR TEMP_HIGH
-COMMAND INVALID
+Response refers to backend-driven actions based on threat severity.
+
+Possible responses include:
+
+- logging the event
+- raising an alert
+- marking a client/session as suspicious
+- rejecting a request
+- temporarily blocking a client
+- increasing monitoring level for a client
+- storing evidence in structured logs
+  
+---
+## Example Message Format
+
+The server is planned to support structured messages. Initial versions may use newline-delimited JSON or structured plain text.
+
+Example JSON message:
+```bash
+{
+  "client_id": "sensor_01",
+  "timestamp": "2026-04-23T18:30:00Z",
+  "event_type": "AUTH_ATTEMPT",
+  "status": "FAILED",
+  "request_id": "abc123"
+}
 ```
----
-## Detection Scope (Planned)
 
-The system is designed to evolve toward detecting:
+---
+## Detection Scope
+
+The system is designed to detect and respond to:
 
 - malformed or invalid messages
 - repeated error conditions
+- repeated failed authentication attempts
 - suspicious command patterns
+- suspicious request frequency
 - abnormal message frequency
-- communication loss (e.g., missing heartbeat)
-- unauthorized or unknown client activity
+- replayed request identifiers
+- invalid or expired session tokens
+- repeated connection attempts from the same client
 - unusual client connection behavior
 - suspicious IP-based activity patterns
+- unauthorized or unknown client activity
+- communication loss, such as missing heartbeats
 - telemetry inconsistencies
 - rule violations in expected message flow
 
 ---
-## Project Structure 
+
+##Project Structure
+
+Initial server-focused structure:
 ```bash
 threat-detection-server/
 │
@@ -108,129 +142,193 @@ threat-detection-server/
 │   ├── main.cpp
 │   ├── server.cpp
 │   ├── server.h
-│   ├── analyzer.cpp
-│   ├── analyzer.h
+│   ├── parser.cpp
+│   ├── parser.h
+│   ├── threat_engine.cpp
+│   ├── threat_engine.h
+│   ├── response_engine.cpp
+│   ├── response_engine.h
+│   ├── client_state.cpp
+│   ├── client_state.h
 │   ├── logger.cpp
 │   └── logger.h
 │
 ├── logs/
 │   └── threat_log.txt
 │
+├── docs/
+│   └── architecture.md
+│
+├── tests/
+│
 ├── Makefile
+└── README.md
+```
+Long-term system structure may expand to include:
+
+```bash
+threat-detection-system/
+│
+├── server/      # C++ threat detection server
+├── agent/       # future lightweight client agent
+├── dashboard/   # future monitoring interface
+├── docs/        # architecture notes, diagrams, threat rules
+├── tests/       # test clients and detection tests
 └── README.md
 ```
 
 ---
 
-## Architecture 
-```bash 
+## Architecture
+Current server architecture:
+
+
+```bash
 Multiple Clients
         ↓
 TCP Listener (Server)
         ↓
 Client Handler Threads
         ↓
-Analyzer
+Message Parser
         ↓
-Per-Client State Tracking
+Threat Engine
+        ↓
+Client State Tracker
+        ↓
+Response Engine
         ↓
 Logger
         ↓
 Threat / Status Output
 ```
-
 ---
 
 ## Components
 
 #### Server
+
 - initializes TCP listener
 - accepts multiple client connections
 - spawns a thread per client
-- receives incoming messages
-- forwards client/message data for analysis
+= receives incoming messages
+- forwards client/message data into the processing pipeline
 
-#### Analyzer
-- interprets messages
-- applies detection logic
-- tracks threat state per client
-- determines client-level and system-level state transitions
+#### Threat Engine
+- applies rule-based detection logic
+- assigns threat level
+- evaluates message content, client behavior, and recent activity
+
+#### Client State Tracker
+- tracks per-client history
+- stores recent events, failed attempts, suspicious behavior, and connection metadata
+- supports client-specific threat classification
+
+#### Response Engine
+- decides what action to take based on threat level
+- supports actions such as log, alert, reject, block, or increase monitoring level
 
 #### Logger
-- records events with timestamps
-- stores client identity (IP/connection), message, classification, and state
+- records timestamped events
+- stores client identity, IP/connection metadata, message content, classification, and response decision
 
 #### Main
 - orchestrates system flow
 - initializes components
 - manages lifecycle
 
-## Architecture Diagram
+---
+<!-- 
+//## Architecture Diagram
 ![Diagram](Images/Threat_Detection_and_Response_Server.drawio.png)
 
-A visual architecture diagram will be added here (planned using draw.io).
 
-This diagram will represent the system at a component level and illustrate:
+The diagram will illustrate:
 
-- multiple external clients
-- TCP listener and connection handling
-- thread-per-client execution model
-- message flow into the analyzer
-- per-client state tracking
-- logging pipeline
-- future response and telemetry integration points
+multiple external clients
+TCP listener and connection handling
+thread-per-client execution model
+message parsing pipeline
+threat engine
+per-client state tracking
+response engine
+structured logging flow
+future client agent, dashboard, and telemetry integration points
+
+-->
 
 ## Use Cases
 
 This system can conceptually apply to:
 
+- monitoring client activity across Linux-based systems
+- detecting suspicious command or authentication patterns
+- analyzing event streams from distributed devices
 - monitoring uncrewed vehicle telemetry channels
-- backend monitoring for distributed systems
-- detecting anomalies in system command streams
 - supporting security monitoring pipelines
-- acting as an analysis layer in a larger control system
+- acting as an analysis layer in a larger control or telemetry system
 
 ---
-
-## Development Roadmap
-
-### Phase 1: Core Detection Server
-- concurrent TCP server for multiple clients
-- thread-per-client connection handling
-- plain-text message handling
-- rule-based detection
-- per-client threat-state classification
-- file-based logging
-
-### Phase 2: Enhanced Monitoring
-- improved detection rules
-- message pattern analysis
-- heartbeat monitoring
-- richer per-client state analysis
-- structured log format improvements
-
-### Phase 3: Data & Persistence
-- database integration (e.g., PostgreSQL)
-- persistent event storage
-- queryable log system
-
-### Phase 4: Secure Communication
-- encrypted message transport
-- message integrity validation
-- client authentication and identity validation
-
-### Phase 5: Response & Integration
-- alerting mechanisms
-- integration with telemetry systems
-- automated response workflows
-
-
+<!--
+Development Roadmap
+Phase 0: Setup & Foundation
+set up Linux development environment
+initialize Git repository
+define project structure
+create initial README and documentation notes
+prepare Makefile/build workflow
+Phase 1: Core Server
+build a concurrent TCP server in C++
+accept multiple client connections
+implement thread-per-client handling
+receive structured messages
+parse and validate basic input
+log received events
+classify simple events as NORMAL or SUSPICIOUS
+Phase 2: Threat Detection & Response
+add multiple detection rules
+implement client/session state tracking
+support threat levels: NORMAL, SUSPICIOUS, and CRITICAL
+add automated response decisions such as log, alert, reject, or block
+improve structured logs and evidence trail
+create repeatable test scenarios
+Phase 3: Hardening & Polish
+improve error handling
+refine architecture and module boundaries
+add scripted test clients
+add sample logs and detection examples
+document threat rules and response behavior
+finalize architecture diagram
+Phase 4: Persistence & Operations
+add database-backed event storage, such as PostgreSQL
+add log rotation or archival strategy
+explore syslog or systemd integration
+add queryable event history
+Phase 5: Secure Communication & Client Identity
+add encrypted message transport
+add message integrity validation
+add client authentication and identity validation
+improve session handling and replay protection
+Phase 6: System Expansion
+develop lightweight client agents
+add heartbeat monitoring from agents
+add dashboard or terminal monitoring interface
+integrate with secure telemetry systems
+expand automated response workflows
 ---
+-->
+
+
 
 ## Relationship to Other Systems
 
-This project is designed to integrate with a previously developed system: Secure Communication and Monitoring System
-That system focuses on secure telemetry transmission, encryption, and hardware-level monitoring. The Threat Detection & Response Server acts as a backend intelligence layer, responsible for analyzing incoming data and determining system risk levels.
+This project is designed to remain standalone during early development, while leaving room for future integration with a previously developed project:
+
+**Secure Communication and Monitoring System**
+
+That system focuses on secure telemetry transmission, encryption, PostgreSQL logging, and hardware-level monitoring on Raspberry Pi.
+
+The **Threat Detection & Response Server** is intended to become a backend intelligence layer that can analyze incoming events and determine system risk levels before passing results to logging, alerting, dashboard, or telemetry components.
 
 ---
 
@@ -254,9 +352,6 @@ nc localhost 8080
 ## Status
 Currently in early development.
 
-Focus areas:
+## Author
 
-- backend server implementation
-- concurrent message handling
-- detection logic
-- logging system
+Oscar Campos
