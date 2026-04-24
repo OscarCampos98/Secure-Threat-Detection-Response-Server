@@ -1,0 +1,17 @@
+# Build output
+*.o
+*.out
+*.exe
+threat_server
+
+# Logs
+logs/*.txt
+!logs/.gitkeep
+
+# Editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
