@@ -1,6 +1,9 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <string>
+
+using namespace std;
 /*
 
     server.h
@@ -22,7 +25,7 @@ class Server {
         bool running;   // track if server is running
 
         // Handle client connection (to be implemented later)
-        void handleClient(int client_fd, const char* client_ip, int client_port);  
+        void handleClient(int client_fd, string client_ip, int client_port);  
     
     public:
     

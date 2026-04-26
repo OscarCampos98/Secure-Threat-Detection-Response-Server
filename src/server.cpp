@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <cstring>
+#include <thread>
+#include <string>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -39,7 +41,10 @@ bool Server::start() {
         return false;
     }
 
-    // Bind socket to port
+    /*
+        Allow quick server restart without waiting for a port 
+    */
+
     int opt = 1;
     if(setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         cerr << "[ERROR] Failed to set socket options\n";
@@ -56,13 +61,13 @@ bool Server::start() {
 
     // Bind the socket
     if(bind(server_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
-        cerr << "[ERROR] Failed to bind socket\n";
+        cerr << "[ERROR] Failed to bind socket to port " << port << "\n";
         close(server_fd);
         return false;
     }
 
-    // Listen for incoming connections (5 is the backlog size)
-    if(listen(server_fd, 5) < 0) {
+    // Listen for incoming connections (10 is the backlog size)
+    if(listen(server_fd, 10) < 0) {
         cerr << "[ERROR] Failed to listen on socket\n";
         close(server_fd);
         return false;
@@ -73,35 +78,76 @@ bool Server::start() {
     cout << "[INFO] Threat Detection Server started.\n";
     cout << "[INFO] Listening on port " << port << "...\n";
 
-    // Accept a single client connection (for now)
-    sockaddr_in client_addr;
-    socklen_t client_len = sizeof(client_addr);
-    int client_fd = accept(server_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
-    if (client_fd < 0) {
-        cerr << "[ERROR] Failed to accept client connection\n";
-        stop();
-        return false;
+    /*
+    Main accept loop.
+
+    The server keeps accepting client connections until stop().
+    Each client is handle in its own detached thread
+    */
+
+    while(running){
+        sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
+
+        int client_fd = accept(server_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+
+        if (client_fd < 0) {
+
+            //If the server is still soppused to be running, 
+            //This is an actual accept error. 
+
+            if(running){
+                cerr << "[ERROR] Failed to accept client connection\n"; 
+            }
+            continue;
+        }
+        
+        /*
+        Convert the client's IP address to a human-readable format 
+        */
+        char client_ip[INET_ADDRSTRLEN];
+
+        inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
+
+        int client_port = ntohs(client_addr.sin_port);
+        
+        cout << "[INFO] Client connected from "
+                << client_ip << ":" << client_port << "\n";
+        
+        /*
+        Start a new thread to handle the client connection
+        
+        important: 
+        client_ip is copied into a std::string because the local 
+        characters array will go out of the scope of the loop repeats
+        
+        */
+        string client_ip_str(client_ip);
+        thread client_thread(
+            &Server::handleClient, 
+            this,
+            client_fd,
+            client_ip_str,
+            client_port
+        );
+
+        /*
+        Detach means the trhread runs independently
+
+        Later, we may store threads and join them cleanly,
+        but detach is acceptable for now
+        */
+        client_thread.detach();
+
+
     }
 
-    /*
-    Convert the client's IP address to a human-readable format 
-    */
-    char client_ip[INET_ADDRSTRLEN];
 
-    inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
-
-    int client_port = ntohs(client_addr.sin_port);
-    
-    cout << "[INFO] Client connected from "
-              << client_ip << ":" << client_port << "\n";
-    
-    // Close the client connection (for now)
-    handleClient(client_fd, client_ip, client_port);
     return true;
 }
 
 
-void Server::handleClient(int client_fd, const char* client_ip, int client_port) {
+void Server::handleClient(int client_fd, string client_ip, int client_port) {
     //buffer to hold incoming data from the client 
     //1024 bytes should be sufficient for now
 
