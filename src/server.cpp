@@ -1,5 +1,6 @@
 #include "server.h"
 #include "parser.h"
+#include "threat_engine.h"
 
 #include <iostream>
 #include <cstring>
@@ -157,6 +158,7 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
 
     char buffer[1024];
     Parser parser;
+    ThreatEngine threat_engine;
 
     while (true)
     {
@@ -181,6 +183,7 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
         {
             string raw_message(buffer, bytes_received);
             ParsedMessage parsed = parser.parse(raw_message);
+            ThreatResult result = threat_engine.analyze(parsed);
 
             cout << "[MESSAGE] "
                  << client_ip << " : " << client_port
@@ -201,6 +204,10 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
             }
 
             cout << "\n";
+
+            cout << "[THREAT] Level: "
+                 << ThreatEngine::threatLevelToString(result.level)
+                 << " | Reason: " << result.reason << "\n";
         }
 
         else if (bytes_received == 0)
