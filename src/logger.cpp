@@ -59,7 +59,8 @@ void Logger::logEvent(
     int client_port,
     const ParsedMessage &parsed_message,
     const ThreatResult &threat_result,
-    const ClientStateUpdate &state_update)
+    const ClientStateUpdate &state_update,
+    const ResponseDecision &response_decision)
 {
     /*
         Lock before writing so multiple client threads do not write
@@ -114,4 +115,8 @@ void Logger::logEvent(
     log_file << "critical_events=" << state_update.critical_events << "\n";
     log_file << "state_reason=" << state_update.reason << "\n";
     log_file << "\n";
+    log_file << "response_action="
+             << ResponseEngine::actionToString(response_decision.action) << "\n";
+    log_file << "response_reason="
+             << response_decision.reason << "\n";
 }

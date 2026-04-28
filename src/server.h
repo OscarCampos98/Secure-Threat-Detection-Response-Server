@@ -3,6 +3,7 @@
 
 #include "client_state.h"
 #include "logger.h"
+#include "response_engine.h"
 
 #include <string>
 
@@ -29,6 +30,7 @@ private:
     bool running;  // track if server is running
     ClientStateTracker client_state_tracker;
     Logger logger;
+    ResponseEngine response_engine;
 
     // Handle client connection (to be implemented later)
     void handleClient(int client_fd, string client_ip, int client_port);

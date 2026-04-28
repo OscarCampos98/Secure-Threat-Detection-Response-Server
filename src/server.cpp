@@ -192,12 +192,15 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
 
             ClientStateUpdate state_update = client_state_tracker.updateClientState(client_ip, result);
 
+            ResponseDecision response = response_engine.decideResponse(result, state_update);
+
             logger.logEvent(
                 client_ip,
                 client_port,
                 parsed,
                 result,
-                state_update);
+                state_update,
+                response);
 
             cout << "[MESSAGE] "
                  << client_ip << " : " << client_port
@@ -214,7 +217,7 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
 
             if (!parsed.error.empty())
             {
-                cout << " | Error:" << parsed.error;
+                cout << " | Error: " << parsed.error;
             }
 
             cout << "\n";
@@ -233,6 +236,10 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
                  << " | Critical: " << state_update.critical_events
                  << " | Reason: " << state_update.reason
                  << "\n";
+
+            cout << "[RESPONSE] Action: "
+                 << ResponseEngine::actionToString(response.action)
+                 << " | Reason: " << response.reason << "\n";
         }
 
         else if (bytes_received == 0)

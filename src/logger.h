@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "threat_engine.h"
 #include "client_state.h"
+#include "response_engine.h"
 
 #include <string>
 #include <mutex>
@@ -49,7 +50,8 @@ public:
         int client_port,
         const ParsedMessage &parsed_message,
         const ThreatResult &threat_result,
-        const ClientStateUpdate &state_update
+        const ClientStateUpdate &state_update,
+        const ResponseDecision &response_decision
 
     );
 };
