@@ -210,8 +210,10 @@ The server still logs the raw IP address and port separately:
 ```text
 client_ip=127.0.0.1
 client_port=46124
-client_id=127.0.0.1:46124
+connection_id=127.0.0.1:46124
 ```
+- `connection_id` refers to the TCP connection identity using `IP:PORT`
+- `message_client_id` refers to the logical client/device ID provided inside a JSON message
 
 Future improvements may replace or extend this with:
 

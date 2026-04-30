@@ -55,7 +55,7 @@ string Logger::getCurrentTimestamp()
 }
 
 void Logger::logEvent(
-    const string &client_id,
+    const string &connection_id,
     const string &client_ip,
     int client_port,
     const ParsedMessage &parsed_message,
@@ -87,7 +87,7 @@ void Logger::logEvent(
     */
     log_file << "\n[EVENT]\n";
     log_file << "timestamp=" << getCurrentTimestamp() << "\n";
-    log_file << "client_id=" << client_id << "\n";
+    log_file << "client_id=" << connection_id << "\n";
     log_file << "client_ip=" << client_ip << "\n";
     log_file << "client_port=" << client_port << "\n";
     log_file << "raw_message=" << parsed_message.raw << "\n";
