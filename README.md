@@ -259,30 +259,88 @@ Threat / Status Output
 - records timestamped events
 - stores client identity, IP/connection metadata, message content, classification, and response decision
 
+##### Example 
+```text
+[EVENT]
+timestamp=2026-04-30 11:53:05
+client_id=127.0.0.1:53854
+client_ip=127.0.0.1
+client_port=53854
+raw_message={"client_id":"sensor_01","timestamp":"2026-04-30T09:40:10Z","event_type":"AUTH_ATTEMPT","status":"SUCCESS","request_id":"s1-003"}
+message_type=AUTH_ATTEMPT
+valid=true
+is_json=true
+message_client_id=sensor_01
+message_timestamp=2026-04-30T09:40:10Z
+event_type=AUTH_ATTEMPT
+status=SUCCESS
+request_id=s1-003
+payload=SUCCESS
+threat_level=NORMAL
+threat_reason=Successful authentication attempt reported
+client_state=NORMAL
+total_events=3
+normal_events=3
+suspicious_events=0
+critical_events=0
+state_reason=Client remains normal
+
+response_action=ALLOW
+response_reason=No suspicious activity detected
+
+[EVENT]
+timestamp=2026-04-30 11:53:05
+client_id=127.0.0.1:53856
+client_ip=127.0.0.1
+client_port=53856
+raw_message={"client_id":"sensor_02","timestamp":"2026-04-30T09:40:10Z","event_type":"ERROR","status":"TEMP_HIGH","request_id":"s2-003"}
+message_type=ERROR
+valid=true
+is_json=true
+message_client_id=sensor_02
+message_timestamp=2026-04-30T09:40:10Z
+event_type=ERROR
+status=TEMP_HIGH
+request_id=s2-003
+payload=TEMP_HIGH
+threat_level=SUSPICIOUS
+threat_reason=Error condition reported by client
+client_state=SUSPICIOUS
+total_events=3
+normal_events=1
+suspicious_events=2
+critical_events=0
+state_reason=Client marked suspicious
+
+response_action=MONITOR
+response_reason=Suspicious activity detected; increasing monitoring
+```
+For a bigger picture screenshot please see https://github.com/OscarCampos98/Threat-Detection-Response-Server/blob/main/Images/log_example_dash.png
+
 #### Main
 - orchestrates system flow
 - initializes components
 - manages lifecycle
 
----
-<!-- 
-//## Architecture Diagram
-![Diagram](Images/Threat_Detection_and_Response_Server.drawio.png)
+--- 
+## Architecture Diagram
+![Diagram](Images/Current_diagramV1.0.png)
 
 
-The diagram will illustrate:
 
-multiple external clients
-TCP listener and connection handling
-thread-per-client execution model
-message parsing pipeline
-threat engine
-per-client state tracking
-response engine
-structured logging flow
-future client agent, dashboard, and telemetry integration points
+The diagram illustrate:
+Note that AI was used to generate the diagram for now.
 
--->
+- multiple external clients
+- TCP listener and connection handling
+- thread-per-client execution model
+- message parsing pipeline
+- threat engine
+- per-client state tracking
+- response engine
+- structured logging flow
+
+
 
 ## Use Cases
 
@@ -424,20 +482,6 @@ More testing details are available in:
 
 ```text
 docs/test_cases.md
-```
-
-## Also update Project Structure
-
-Replace the `tests/` and `docs/` parts with:
-
-```markdown
-├── docs/
-│   ├── architecture.md
-│   └── test_cases.md
-│
-├── tests/
-│   ├── manual_client.py
-│   └── multi_client_test.py
 ```
 ---
 
