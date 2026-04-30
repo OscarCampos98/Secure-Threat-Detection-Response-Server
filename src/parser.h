@@ -3,22 +3,34 @@
 
 #include <string>
 
+using namespace std;
 /*
     parser.h
 
     Purpose:
     Declares the message parsing layer.
 
-    The parser is responsible for converting raw client input into
-    a structured format that the threat engine can evaluate later.
+    The parser converts raw client input into a structured format
+    that the threat engine can evaluate.
 
-    Current supported message examples:
-    - HEARTBEAT
-    - STATUS OK
-    - ERROR TEMP_HIGH
-    - COMMAND INVALID
+    Current support:
+    - legacy plain-text messages
+    - JSON messages
 
-    Later, this parser can be upgraded to handle JSON messages.
+    Plain-text examples:
+        HEARTBEAT
+        STATUS OK
+        ERROR TEMP_HIGH
+        COMMAND INVALID
+
+    JSON example:
+        {
+            "client_id": "sensor_01",
+            "timestamp": "2026-04-23T18:30:00Z",
+            "event_type": "AUTH_ATTEMPT",
+            "status": "FAILED",
+            "request_id": "abc123"
+        }
 */
 
 enum class MessageType
@@ -27,36 +39,46 @@ enum class MessageType
     STATUS,
     ERROR,
     COMMAND,
+    AUTH_ATTEMPT,
     UNKNOWN,
     INVALID
 };
 
-/*
-    ParsedMessage stores the result of parsing one client message.
-
-    valid:
-        true  -> message follows a known format
-        false -> malformed or unknown message
-
-    type:
-        detected message type
-
-    raw:
-        original message after basic trimming
-
-    payload:
-        remaining content after the command/type
-
-    error:
-        explanation when parsing fails
-*/
 struct ParsedMessage
 {
-    bool valid;
-    MessageType type;
-    std::string raw;
-    std::string payload;
-    std::string error;
+    bool valid = false;
+
+    /*
+        Indicates whether the original message was JSON.
+        This lets the logger and future modules understand
+        how the message was received.
+    */
+
+    bool is_json = false;
+    MessageType type = MessageType::INVALID;
+
+    /*
+        raw:
+            cleaned original message
+
+        payload:
+            legacy/plain-text payload or useful JSON value
+            such as status, command, or error code
+
+        error:
+            parser error reason when valid == false
+    */
+    string raw;
+    string payload;
+    string error;
+
+    // JSON field
+
+    string client_id;
+    string timestamp;
+    string event_type;
+    string status;
+    string request_id;
 };
 
 class Parser
@@ -71,8 +93,7 @@ public:
         Output:
             ParsedMessage -> structured result
     */
-    ParsedMessage parse(const std::string &raw_message);
-
+    ParsedMessage parse(const string &raw_message);
     /*
         Converts a MessageType enum into readable text.
         Useful for logging and terminal output.
@@ -84,6 +105,12 @@ private:
         Removes leading and trailing whitespace/newline characters.
     */
     std::string trim(const std::string &input);
+
+    // Parse legacy plain-text messages
+    ParsedMessage parsePlainText(const string &message);
+
+    // Parse JSON messages
+    ParsedMessage parseJson(const string &message);
 };
 
 #endif

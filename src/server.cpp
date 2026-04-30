@@ -160,8 +160,10 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
 {
     // buffer to hold incoming data from the client
     // 1024 bytes should be sufficient for now
+    // Connection-based client identifier.
 
     char buffer[1024];
+    string client_id = client_ip + ":" + to_string(client_port);
     Parser parser;
     ThreatEngine threat_engine;
 
@@ -190,11 +192,12 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
             ParsedMessage parsed = parser.parse(raw_message);
             ThreatResult result = threat_engine.analyze(parsed);
 
-            ClientStateUpdate state_update = client_state_tracker.updateClientState(client_ip, result);
+            ClientStateUpdate state_update = client_state_tracker.updateClientState(client_id, result);
 
             ResponseDecision response = response_engine.decideResponse(result, state_update);
 
             logger.logEvent(
+                client_id,
                 client_ip,
                 client_port,
                 parsed,

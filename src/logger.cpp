@@ -55,6 +55,7 @@ string Logger::getCurrentTimestamp()
 }
 
 void Logger::logEvent(
+    const string &client_id,
     const string &client_ip,
     int client_port,
     const ParsedMessage &parsed_message,
@@ -86,12 +87,40 @@ void Logger::logEvent(
     */
     log_file << "\n[EVENT]\n";
     log_file << "timestamp=" << getCurrentTimestamp() << "\n";
+    log_file << "client_id=" << client_id << "\n";
     log_file << "client_ip=" << client_ip << "\n";
     log_file << "client_port=" << client_port << "\n";
     log_file << "raw_message=" << parsed_message.raw << "\n";
     log_file << "message_type="
              << Parser::messageTypeToString(parsed_message.type) << "\n";
     log_file << "valid=" << (parsed_message.valid ? "true" : "false") << "\n";
+
+    log_file << "is_json=" << (parsed_message.is_json ? "true" : "false") << "\n";
+
+    if (!parsed_message.client_id.empty())
+    {
+        log_file << "message_client_id=" << parsed_message.client_id << "\n";
+    }
+
+    if (!parsed_message.timestamp.empty())
+    {
+        log_file << "message_timestamp=" << parsed_message.timestamp << "\n";
+    }
+
+    if (!parsed_message.event_type.empty())
+    {
+        log_file << "event_type=" << parsed_message.event_type << "\n";
+    }
+
+    if (!parsed_message.status.empty())
+    {
+        log_file << "status=" << parsed_message.status << "\n";
+    }
+
+    if (!parsed_message.request_id.empty())
+    {
+        log_file << "request_id=" << parsed_message.request_id << "\n";
+    }
 
     if (!parsed_message.payload.empty())
     {

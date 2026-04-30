@@ -72,6 +72,30 @@ ThreatResult ThreatEngine::analyze(const ParsedMessage &message)
             ThreatLevel::NORMAL,
             "Command message received"};
     }
+
+    // AUTH_ATTEMPT is currently supported by JSON messages.
+    // FAILED authentication attemps are suspecious
+    // SUCCESS authentication attemps are normal
+    if (message.type == MessageType::AUTH_ATTEMPT)
+    {
+        if (message.status == "FAILED")
+        {
+            return {
+                ThreatLevel::SUSPICIOUS,
+                "Failed authentication attempt reported"};
+        }
+        if (message.status == "SUCCESS")
+        {
+            return {
+                ThreatLevel::NORMAL,
+                "Successful authentication attempt reported"
+
+            };
+        }
+        return {
+            ThreatLevel::SUSPICIOUS,
+            "Authentication attempt with non-standard status"};
+    }
     // Safety fallback
     return {
         ThreatLevel::CRITICAL,

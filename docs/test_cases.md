@@ -156,32 +156,30 @@ client_port=46148
 
 # Important Note About Localhost Testing
 
-When running multiple simulated clients locally, all clients may appear as:
+### Important Note About Localhost Testing
+
+When running multiple simulated clients locally, all clients may share the same IP address:
+
 ```text
 client_ip=127.0.0.1
 ```
 
-with different source ports.
+However, each TCP connection receives a different source port:
+```text
+127.0.0.1:46124
+127.0.0.1:46132
+127.0.0.1:46148
+```
 
-The current client state tracker uses the client IP address as the client identity. This means multiple localhost clients share the same tracked state.
+The current implementation uses a connection-based client identifier:
+```text
+client_id = client_ip:client_port
+```
+This allows the server to track state separately for each active connection during local multi-client testing.
+This is a practical early-stage identity model. Future versions may support explicit client IDs, session tokens, or authenticated client identity.
 
-This is expected for the current implementation.
 
-The multi-client test currently validates:
 
-- concurrent connection handling
-- thread-per-client processing
-- logging under concurrent activity
-- pipeline stability with multiple active clients
-
-It does not fully validate separate IP-based client state because all local simulated clients use the same localhost IP.
-
-Future improvements may use:
-
-- different physical devices on the home network
-- IP + port as a temporary client identifier
-- explicit client_id fields in messages
-- authenticated client identity
 ---
 
 # Log Verification
@@ -195,6 +193,7 @@ Each event should include:
 ```text
 [EVENT]
 timestamp=
+client_id=
 client_ip=
 client_port=
 raw_message=

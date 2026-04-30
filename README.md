@@ -56,6 +56,7 @@ Secure communication, authentication, and stronger client identity validation ar
 - Per-client state tracking
 - Response decision engine
 - File-based structured logging
+- Connection-based client identity using IP and source Port
 
 ---
 
@@ -236,7 +237,7 @@ Threat / Status Output
 - evaluates message content, client behavior, and recent activity
 
 #### Client State Tracker
-- tracks per-client history
+- tracks per-client connection history using IP and source Port
 - stores recent events, failed attempts, suspicious behavior, and connection metadata
 - supports client-specific threat classification
 

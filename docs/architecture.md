@@ -191,17 +191,35 @@ Shared state, such as client state tracking and log writing, uses mutex protecti
 
 ## Current Client Identity Model
 
-The current implementation identifies clients using their IP address.
+The current implementation identifies each active client connection using a connection-based identifier:
 
-This is simple and useful for early LAN or Raspberry Pi testing.
+```text
+client_id = client_ip:client_port
+```
 
-Future improvements may include:
+Example:
+```text
+127.0.0.1:46124
+127.0.0.1:46132
+127.0.0.1:46148
+```
 
-- explicit client IDs
-- session tokens
-- authenticated client identity
+This model is useful for local multi-client testing because multiple simulated clients may connect from the same IP address while using different source ports.
+
+The server still logs the raw IP address and port separately:
+```text
+client_ip=127.0.0.1
+client_port=46124
+client_id=127.0.0.1:46124
+```
+
+Future improvements may replace or extend this with:
+
+- explicit client IDs in structured messages
+- session identifiers
+- authenticated device identities
 - replay protection
-- stronger device identity validation
+- stronger client validation
 ---
 
 ## Current Limitations

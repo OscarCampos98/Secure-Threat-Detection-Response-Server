@@ -46,6 +46,7 @@ public:
 
     // Writes one complete event record to the log file
     void logEvent(
+        const string &client_id,
         const string &client_ip,
         int client_port,
         const ParsedMessage &parsed_message,
