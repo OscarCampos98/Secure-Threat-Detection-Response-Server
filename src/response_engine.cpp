@@ -20,17 +20,33 @@ ResponseDecision ResponseEngine::decideResponse(
     const ClientStateUpdate &state_update)
 {
     /*
-        If the client is already in CRITICAL state, mark it as a block candidate.
+         If the client is already in CRITICAL state, mark it as a block candidate.
 
-        This can happen because:
-        - a critical event was detected directly
-        - repeated suspicious behavior escalated the client state
-    */
+         This can happen because:
+         - a critical event was detected directly
+         - repeated suspicious behavior escalated the client state
+     */
     if (state_update.current_state == ClientThreatState::CRITICAL)
     {
         return {
             ResponseAction::BLOCK_CANDIDATE,
             "Client is in critical state and should be considered for blocking"};
+    }
+
+    /*
+        If the client is in SUSPICIOUS state, increase monitoring even if
+        the latest individual message looked normal.
+
+        This can happen when stateful behavior is detected, such as:
+        - repeated request IDs
+        - repeated low-risk anomalies
+        - behavior that is suspicious over time rather than from one message
+    */
+    if (state_update.current_state == ClientThreatState::SUSPICIOUS)
+    {
+        return {
+            ResponseAction::MONITOR,
+            "Client is in suspicious state; increasing monitoring"};
     }
 
     /*
@@ -41,17 +57,6 @@ ResponseDecision ResponseEngine::decideResponse(
         return {
             ResponseAction::REJECT,
             "Critical threat detected; request should be rejected"};
-    }
-
-    /*
-        Suspicious events are not blocked immediately.
-        They should be monitored and tracked.
-    */
-    if (threat_result.level == ThreatLevel::SUSPICIOUS)
-    {
-        return {
-            ResponseAction::MONITOR,
-            "Suspicious activity detected; increasing monitoring"};
     }
 
     /*

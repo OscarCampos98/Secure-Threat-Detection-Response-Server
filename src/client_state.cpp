@@ -21,7 +21,8 @@ using namespace std;
 
 ClientStateUpdate ClientStateTracker::updateClientState(
     const string &client_id,
-    const ThreatResult &threat)
+    const ThreatResult &threat,
+    const ParsedMessage &parsed_message)
 {
     /*
     Lock the mutex because multiple client states may access
@@ -39,8 +40,50 @@ ClientStateUpdate ClientStateTracker::updateClientState(
     stats.total_envents++;
     string update_reason;
 
+    bool replay_detected = false;
+
+    /*
+        Replay detection:
+        if the message includes a request_id that has already been seen for this connection,
+        treat as critical...
+
+        This helps detect repeated or reused requests, which may indicate
+        replay behavior, duplicate transmission, or suspicious client activity.
+    */
+
+    if (!parsed_message.request_id.empty())
+    {
+        if (stats.seen_request_ids.count(parsed_message.request_id) > 0)
+        {
+            replay_detected = true;
+        }
+        else
+        {
+            stats.seen_request_ids.insert(parsed_message.request_id);
+        }
+    }
+
     // update counters based on the latext threat level
-    if (threat.level == ThreatLevel::NORMAL)
+    if (replay_detected)
+    {
+        stats.suspicious_events++;
+
+        if (stats.current_state == ClientThreatState::CRITICAL)
+        {
+            update_reason = "Repeated request ID detected while client is already critical";
+        }
+        else if (stats.suspicious_events >= 3)
+        {
+            stats.current_state = ClientThreatState::CRITICAL;
+            update_reason = "Repeated suspicious activity escalated to critical";
+        }
+        else
+        {
+            stats.current_state = ClientThreatState::SUSPICIOUS;
+            update_reason = "Repeated request ID detected; possible retry or replay";
+        }
+    }
+    else if (threat.level == ThreatLevel::NORMAL)
     {
         stats.normal_events++;
 
@@ -59,7 +102,7 @@ ClientStateUpdate ClientStateTracker::updateClientState(
         }
         else
         {
-            update_reason = "Normal events received, client state unchange";
+            update_reason = "Normal events received, client state unchanged";
         }
     }
     else if (threat.level == ThreatLevel::SUSPICIOUS)

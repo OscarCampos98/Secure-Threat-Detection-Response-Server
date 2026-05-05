@@ -192,7 +192,7 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
             ParsedMessage parsed = parser.parse(raw_message);
             ThreatResult result = threat_engine.analyze(parsed);
 
-            ClientStateUpdate state_update = client_state_tracker.updateClientState(connection_id, result);
+            ClientStateUpdate state_update = client_state_tracker.updateClientState(connection_id, result, parsed);
 
             ResponseDecision response = response_engine.decideResponse(result, state_update);
 

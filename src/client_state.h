@@ -2,9 +2,11 @@
 #define CLIENT_STATE_H
 
 #include "threat_engine.h"
+#include "parser.h"
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 
 using namespace std;
@@ -46,6 +48,9 @@ struct ClientStats
     int suspicious_events = 0;
     int critical_events = 0;
 
+    // Track id request
+    unordered_set<string> seen_request_ids;
+
     ClientThreatState current_state = ClientThreatState::NORMAL;
 };
 
@@ -86,7 +91,8 @@ public:
     */
     ClientStateUpdate updateClientState(
         const string &client_id,
-        const ThreatResult &threat
+        const ThreatResult &threat,
+        const ParsedMessage &ParsedMessage
 
     );
 
