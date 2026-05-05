@@ -63,6 +63,11 @@ ClientStateUpdate ClientStateTracker::updateClientState(
         }
     }
 
+    // Track authentication
+    bool failed_auth_detected =
+        parsed_message.event_type == "AUTH_ATTEMPT" &&
+        parsed_message.status == "FAILED";
+
     // update counters based on the latext threat level
     if (replay_detected)
     {
@@ -81,6 +86,26 @@ ClientStateUpdate ClientStateTracker::updateClientState(
         {
             stats.current_state = ClientThreatState::SUSPICIOUS;
             update_reason = "Repeated request ID detected; possible retry or replay";
+        }
+    }
+    else if (failed_auth_detected)
+    {
+        stats.failed_auth_attempts++;
+        stats.suspicious_events++;
+
+        if (stats.current_state == ClientThreatState::CRITICAL)
+        {
+            update_reason = "Failed authentication detected while client is already critical";
+        }
+        else if (stats.failed_auth_attempts >= 3)
+        {
+            stats.current_state = ClientThreatState::CRITICAL;
+            update_reason = "Failed authentication threshold exceeded";
+        }
+        else
+        {
+            stats.current_state = ClientThreatState::SUSPICIOUS;
+            update_reason = "Failed authentication attempt detected";
         }
     }
     else if (threat.level == ThreatLevel::NORMAL)

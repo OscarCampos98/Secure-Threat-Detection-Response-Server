@@ -32,6 +32,11 @@ TEST_MESSAGES = [
     "HEARTBEAT",
     "STATUS OK",
 
+     # Failed authentication threshold test
+    '{"client_id":"sensor_01","timestamp":"2026-04-29T18:31:00Z","event_type":"AUTH_ATTEMPT","status":"FAILED","request_id":"authfail001"}',
+    '{"client_id":"sensor_01","timestamp":"2026-04-29T18:31:05Z","event_type":"AUTH_ATTEMPT","status":"FAILED","request_id":"authfail002"}',
+    '{"client_id":"sensor_01","timestamp":"2026-04-29T18:31:10Z","event_type":"AUTH_ATTEMPT","status":"FAILED","request_id":"authfail003"}',
+
     # Replay detection test
     # First replay001 should be normal.
     # Second replay001 should be suspicious as a possible retry or replay.
@@ -55,6 +60,8 @@ TEST_MESSAGES = [
 
     # Malformed JSON
     '{"client_id":"sensor_01","event_type":"AUTH_ATTEMPT","status":"FAILED"'
+
+
 ]
 
 def main():

@@ -1,0 +1,52 @@
+Documentation Notes — Request ID Replay Detection
+
+The Threat Detection & Response Server now includes request ID replay detection as a stateful security feature.
+
+Purpose:
+Replay detection helps identify repeated or reused request IDs from the same TCP connection. This may indicate a normal retry, duplicate transmission, client-side error, or possible replay behavior. The system does not immediately treat a duplicate request ID as critical because legitimate retries can happen when a client does not receive a response or needs to resend a request.
+
+Current Behavior:
+- The parser extracts request_id from structured JSON messages.
+- The ClientStateTracker stores previously seen request IDs per connection.
+- The first time a request_id is seen, it is stored and processed normally.
+- If the same request_id appears again from the same connection, the client state is marked SUSPICIOUS.
+- The state reason becomes: "Repeated request ID detected; possible retry or replay".
+- The ResponseEngine now checks suspicious client state and returns MONITOR even if the latest individual message is otherwise normal.
+- If the client is already CRITICAL, repeated request IDs do not downgrade the client.
+
+Expected Replay Test:
+A valid JSON HEARTBEAT using request_id=replay001 is sent twice.
+
+First message:
+- threat_level=NORMAL
+- client_state=NORMAL
+- state_reason=Client remains normal
+- response_action=ALLOW
+
+Second message:
+- threat_level=NORMAL
+- client_state=SUSPICIOUS
+- state_reason=Repeated request ID detected; possible retry or replay
+- response_action=MONITOR
+- response_reason=Client is in suspicious state; increasing monitoring
+
+Design Decision:
+Duplicate request IDs are treated as SUSPICIOUS first, not immediately CRITICAL, to reduce false positives from legitimate retries. This keeps the server realistic for future home-network monitoring where duplicate requests may happen for non-malicious reasons.
+
+Files Updated:
+- src/client_state.h
+- src/client_state.cpp
+- src/server.cpp
+- src/response_engine.cpp
+- tests/manual_client.py
+
+Future Documentation Updates:
+- Add replay detection to README current features.
+- Add replay detection to docs/test_cases.md.
+- Mention that replay detection is currently tracked per connection_id.
+- Clarify that connection_id uses client_ip:client_port.
+- Clarify that message_client_id comes from the JSON client_id field.
+- Mention that future versions may track replay IDs by logical device ID, source IP, or authenticated identity instead of only by TCP connection.
+
+---
+

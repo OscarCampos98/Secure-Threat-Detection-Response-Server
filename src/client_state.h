@@ -48,6 +48,9 @@ struct ClientStats
     int suspicious_events = 0;
     int critical_events = 0;
 
+    // Tracks failed authentications attemps, for this connection
+    int failed_auth_attempts = 0;
+
     // Track id request
     unordered_set<string> seen_request_ids;
 
@@ -92,7 +95,7 @@ public:
     ClientStateUpdate updateClientState(
         const string &client_id,
         const ThreatResult &threat,
-        const ParsedMessage &ParsedMessage
+        const ParsedMessage &parsed_message
 
     );
 
