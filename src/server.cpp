@@ -206,7 +206,7 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
                 response);
 
             cout << "[MESSAGE] "
-                 << client_ip << " : " << client_port
+                 << client_ip << ":" << client_port
                  << " -> " << parsed.raw << "\n";
 
             cout << "[PARSED] Type: "
@@ -229,7 +229,7 @@ void Server::handleClient(int client_fd, string client_ip, int client_port)
                  << ThreatEngine::threatLevelToString(result.level)
                  << " | Reason: " << result.reason << "\n";
 
-            cout << "[STATE] Client: "
+            cout << "[STATE] Connection: "
                  << state_update.client_id
                  << " | State: "
                  << ClientStateTracker::stateToString(state_update.current_state)
