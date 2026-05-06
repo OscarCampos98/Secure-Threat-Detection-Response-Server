@@ -96,6 +96,44 @@ ThreatResult ThreatEngine::analyze(const ParsedMessage &message)
             ThreatLevel::SUSPICIOUS,
             "Authentication attempt with non-standard status"};
     }
+
+    /*
+        DNS_QUERY is use for home-network style monitoring.
+
+        OK:
+            normal DNS query
+        SUSPECIOUS_DOMAIN:
+            domain looks unusual, risky, phishing-like, or worth monitoring
+        KNOWN_MALICIOUS_DOMAIN:
+            domain is known or classified as malicious and should be treated as critical
+
+    */
+    if (message.type == MessageType::DNS_QUERY)
+    {
+        if (message.status == "OK")
+        {
+            return {
+                ThreatLevel::NORMAL,
+                "DNS query allowed"};
+        }
+        if (message.status == "SUSPICIOUS_DOMAIN")
+        {
+            return {
+                ThreatLevel::SUSPICIOUS,
+                "Suspicious domain query detected"};
+        }
+        if (message.status == "KNOWN_MALICIOUS_DOMAIN")
+        {
+            return {
+                ThreatLevel::CRITICAL,
+                "Known malicious domain query detected"};
+        }
+
+        return {
+            ThreatLevel::SUSPICIOUS,
+            "DNS query with non-standard status"};
+    }
+
     // Safety fallback
     return {
         ThreatLevel::CRITICAL,

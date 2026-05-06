@@ -32,7 +32,13 @@ TEST_MESSAGES = [
     "HEARTBEAT",
     "STATUS OK",
 
-     # Failed authentication threshold test
+    # DNS query monitoring tests
+    '{"client_id":"home_dns_monitor","timestamp":"2026-05-05T18:30:00Z","event_type":"DNS_QUERY","status":"OK","domain":"example.com","request_id":"dns001"}',
+    '{"client_id":"home_dns_monitor","timestamp":"2026-05-05T18:30:05Z","event_type":"DNS_QUERY","status":"SUSPICIOUS_DOMAIN","domain":"fake-login-example.com","request_id":"dns002"}',
+    '{"client_id":"home_dns_monitor","timestamp":"2026-05-05T18:30:10Z","event_type":"DNS_QUERY","status":"KNOWN_MALICIOUS_DOMAIN","domain":"malware-example.com","request_id":"dns003"}',
+
+
+    # Failed authentication threshold test
     '{"client_id":"sensor_01","timestamp":"2026-04-29T18:31:00Z","event_type":"AUTH_ATTEMPT","status":"FAILED","request_id":"authfail001"}',
     '{"client_id":"sensor_01","timestamp":"2026-04-29T18:31:05Z","event_type":"AUTH_ATTEMPT","status":"FAILED","request_id":"authfail002"}',
     '{"client_id":"sensor_01","timestamp":"2026-04-29T18:31:10Z","event_type":"AUTH_ATTEMPT","status":"FAILED","request_id":"authfail003"}',

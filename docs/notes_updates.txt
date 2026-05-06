@@ -50,3 +50,110 @@ Future Documentation Updates:
 
 ---
 
+Documentation Notes — Failed Authentication Threshold Detection
+
+The Threat Detection & Response Server now includes failed authentication threshold detection as a stateful security feature.
+
+Purpose:
+This feature detects repeated failed authentication attempts from the same TCP connection. A single failed authentication attempt may be a normal mistake or a client-side issue, but repeated failed attempts can indicate brute-force behavior, unauthorized access attempts, or suspicious client activity.
+
+Current Behavior:
+- The parser extracts event_type and status from JSON messages.
+- AUTH_ATTEMPT with status=SUCCESS is treated as normal behavior.
+- AUTH_ATTEMPT with status=FAILED is treated as suspicious behavior.
+- The ClientStateTracker now stores a failed_auth_attempts counter per connection.
+- The first failed authentication attempt marks the client as SUSPICIOUS.
+- The second failed authentication attempt keeps the client SUSPICIOUS.
+- The third failed authentication attempt escalates the client state to CRITICAL.
+- Once the client becomes CRITICAL, the ResponseEngine returns BLOCK_CANDIDATE.
+- If the client is already CRITICAL, additional failed authentication attempts do not downgrade the client.
+
+Expected Failed Authentication Test:
+Three JSON AUTH_ATTEMPT messages with status=FAILED are sent from the same connection using unique request IDs:
+
+authfail001
+authfail002
+authfail003
+
+Expected results:
+- authfail001:
+  - threat_level=SUSPICIOUS
+  - client_state=SUSPICIOUS
+  - state_reason=Failed authentication attempt detected
+  - response_action=MONITOR
+
+- authfail002:
+  - threat_level=SUSPICIOUS
+  - client_state=SUSPICIOUS
+  - state_reason=Failed authentication attempt detected
+  - response_action=MONITOR
+
+- authfail003:
+  - threat_level=SUSPICIOUS
+  - client_state=CRITICAL
+  - state_reason=Failed authentication threshold exceeded
+  - response_action=BLOCK_CANDIDATE
+
+Design Decision:
+Failed authentication threshold detection is implemented in the ClientStateTracker because it requires memory across multiple messages. The ThreatEngine still classifies each individual failed auth message as SUSPICIOUS, while the ClientStateTracker decides when repeated failed attempts should escalate the connection to CRITICAL.
+
+Files Updated:
+- src/client_state.h
+- src/client_state.cpp
+- tests/manual_client.py
+
+Testing Completed:
+- manual_client.py confirms failed-auth threshold escalation.
+- multi_client_test.py confirms concurrent client behavior still works.
+- sensor_01 remains NORMAL / ALLOW for normal activity.
+- sensor_02 becomes SUSPICIOUS / MONITOR for repeated error activity.
+- sensor_03 remains CRITICAL / BLOCK_CANDIDATE after invalid command and malformed JSON activity.
+
+Related Previous Feature:
+This feature builds on the previous request ID replay detection milestone, where repeated request IDs are treated as SUSPICIOUS first to account for possible legitimate retries.
+
+---
+Documentation Notes — DNS Query Threat Detection
+
+The Threat Detection & Response Server now supports DNS_QUERY events as an early step toward home-network suspicious request monitoring.
+
+Purpose:
+DNS query detection allows the server to process network-style events representing domain lookup activity. This moves the project closer to the long-term goal of monitoring home-network activity for suspicious requests, phishing-like domains, scam-related indicators, or known malicious destinations.
+
+Current Behavior:
+- The parser now supports a DNS_QUERY message type.
+- JSON DNS_QUERY messages must include event_type, status, domain, and request_id.
+- The parser extracts and stores the domain field.
+- The logger writes domain=... for DNS query events.
+- The ThreatEngine classifies DNS_QUERY events based on status.
+
+DNS_QUERY Rules:
+- status=OK:
+  - threat_level=NORMAL
+  - response_action=ALLOW
+
+- status=SUSPICIOUS_DOMAIN:
+  - threat_level=SUSPICIOUS
+  - client_state=SUSPICIOUS
+  - response_action=MONITOR
+
+- status=KNOWN_MALICIOUS_DOMAIN:
+  - threat_level=CRITICAL
+  - client_state=CRITICAL
+  - response_action=BLOCK_CANDIDATE
+
+Test Messages:
+- dns001: example.com with status=OK
+- dns002: fake-login-example.com with status=SUSPICIOUS_DOMAIN
+- dns003: malware-example.com with status=KNOWN_MALICIOUS_DOMAIN
+
+Files Updated:
+- src/parser.h
+- src/parser.cpp
+- src/threat_engine.cpp
+- src/logger.cpp
+- tests/manual_client.py
+
+Design Note:
+DNS_QUERY support is currently simulated through JSON test messages. Future versions may connect this to real DNS telemetry from a home-network source such as Pi-hole logs, router logs, DNS resolver logs, or a lightweight local monitoring script.
+

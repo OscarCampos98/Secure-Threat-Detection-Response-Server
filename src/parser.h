@@ -40,6 +40,7 @@ enum class MessageType
     ERROR,
     COMMAND,
     AUTH_ATTEMPT,
+    DNS_QUERY,
     UNKNOWN,
     INVALID
 };
@@ -79,6 +80,7 @@ struct ParsedMessage
     string event_type;
     string status;
     string request_id;
+    string domain;
 };
 
 class Parser

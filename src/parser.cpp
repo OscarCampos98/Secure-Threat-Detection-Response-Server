@@ -18,10 +18,11 @@
 */
 
 using json = nlohmann::json;
+using namespace std;
 
-ParsedMessage Parser::parse(const std::string &raw_message)
+ParsedMessage Parser::parse(const string &raw_message)
 {
-    std::string cleaned_message = trim(raw_message);
+    string cleaned_message = trim(raw_message);
 
     ParsedMessage result;
     result.raw = cleaned_message;
@@ -46,7 +47,7 @@ ParsedMessage Parser::parse(const std::string &raw_message)
     return parsePlainText(cleaned_message);
 }
 
-ParsedMessage Parser::parsePlainText(const std::string &message)
+ParsedMessage Parser::parsePlainText(const string &message)
 {
     ParsedMessage result;
 
@@ -55,13 +56,13 @@ ParsedMessage Parser::parsePlainText(const std::string &message)
     result.is_json = false;
     result.type = MessageType::INVALID;
 
-    std::istringstream stream(message);
+    istringstream stream(message);
 
-    std::string command;
+    string command;
     stream >> command;
 
-    std::string payload;
-    std::getline(stream, payload);
+    string payload;
+    getline(stream, payload);
     payload = trim(payload);
 
     result.payload = payload;
@@ -121,7 +122,7 @@ ParsedMessage Parser::parsePlainText(const std::string &message)
     return result;
 }
 
-ParsedMessage Parser::parseJson(const std::string &message)
+ParsedMessage Parser::parseJson(const string &message)
 {
     ParsedMessage result;
 
@@ -150,7 +151,7 @@ ParsedMessage Parser::parseJson(const std::string &message)
             return result;
         }
 
-        result.event_type = parsed_json["event_type"].get<std::string>();
+        result.event_type = parsed_json["event_type"].get<string>();
 
         /*
             useful for future logging, identity handling,
@@ -158,22 +159,28 @@ ParsedMessage Parser::parseJson(const std::string &message)
         */
         if (parsed_json.contains("client_id") && parsed_json["client_id"].is_string())
         {
-            result.client_id = parsed_json["client_id"].get<std::string>();
+            result.client_id = parsed_json["client_id"].get<string>();
         }
 
         if (parsed_json.contains("timestamp") && parsed_json["timestamp"].is_string())
         {
-            result.timestamp = parsed_json["timestamp"].get<std::string>();
+            result.timestamp = parsed_json["timestamp"].get<string>();
         }
 
         if (parsed_json.contains("status") && parsed_json["status"].is_string())
         {
-            result.status = parsed_json["status"].get<std::string>();
+            result.status = parsed_json["status"].get<string>();
         }
 
         if (parsed_json.contains("request_id") && parsed_json["request_id"].is_string())
         {
-            result.request_id = parsed_json["request_id"].get<std::string>();
+            result.request_id = parsed_json["request_id"].get<string>();
+        }
+
+        // Extraxt domain field from JSON
+        if (parsed_json.contains("domain") && parsed_json["domain"].is_string())
+        {
+            result.domain = parsed_json["domain"].get<string>();
         }
 
         /*
@@ -247,6 +254,28 @@ ParsedMessage Parser::parseJson(const std::string &message)
             return result;
         }
 
+        // Add DNS_QUERY JSON mapping
+        if (result.event_type == "DNS_QUERY")
+        {
+            if (result.status.empty())
+            {
+                result.error = "DNS_QUERY JSON message missing status";
+                result.type = MessageType::INVALID;
+                return result;
+            }
+            if (result.domain.empty())
+            {
+                result.error = "DNS_QUERY JSON message missing domain";
+                result.type = MessageType::INVALID;
+                return result;
+            }
+
+            result.valid = true;
+            result.type = MessageType::DNS_QUERY;
+            result.payload = result.status;
+            return result;
+        }
+
         result.type = MessageType::UNKNOWN;
         result.error = "Unknown JSON event_type";
         return result;
@@ -255,12 +284,12 @@ ParsedMessage Parser::parseJson(const std::string &message)
     {
         result.valid = false;
         result.type = MessageType::INVALID;
-        result.error = std::string("JSON parse error: ") + error.what();
+        result.error = string("JSON parse error: ") + error.what();
         return result;
     }
 }
 
-std::string Parser::messageTypeToString(MessageType type)
+string Parser::messageTypeToString(MessageType type)
 {
     switch (type)
     {
@@ -279,6 +308,9 @@ std::string Parser::messageTypeToString(MessageType type)
     case MessageType::AUTH_ATTEMPT:
         return "AUTH_ATTEMPT";
 
+    case MessageType::DNS_QUERY:
+        return "DNS_QUERY";
+
     case MessageType::UNKNOWN:
         return "UNKNOWN";
 
@@ -290,13 +322,13 @@ std::string Parser::messageTypeToString(MessageType type)
     }
 }
 
-std::string Parser::trim(const std::string &input)
+string Parser::trim(const string &input)
 {
-    auto start = std::find_if_not(input.begin(), input.end(), [](unsigned char ch)
-                                  { return std::isspace(ch); });
+    auto start = find_if_not(input.begin(), input.end(), [](unsigned char ch)
+                             { return isspace(ch); });
 
-    auto end = std::find_if_not(input.rbegin(), input.rend(), [](unsigned char ch)
-                                { return std::isspace(ch); })
+    auto end = find_if_not(input.rbegin(), input.rend(), [](unsigned char ch)
+                           { return isspace(ch); })
                    .base();
 
     if (start >= end)
@@ -304,5 +336,5 @@ std::string Parser::trim(const std::string &input)
         return "";
     }
 
-    return std::string(start, end);
+    return string(start, end);
 }

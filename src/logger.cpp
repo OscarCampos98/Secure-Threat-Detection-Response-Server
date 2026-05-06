@@ -122,6 +122,11 @@ void Logger::logEvent(
         log_file << "request_id=" << parsed_message.request_id << "\n";
     }
 
+    if (!parsed_message.domain.empty())
+    {
+        log_file << "domain=" << parsed_message.domain << "\n";
+    }
+
     if (!parsed_message.payload.empty())
     {
         log_file << "payload=" << parsed_message.payload << "\n";
